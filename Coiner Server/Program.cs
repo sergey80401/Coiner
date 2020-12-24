@@ -12,6 +12,22 @@ namespace Coiner_Server
 {
     class Program
     {
+        public static void UpdateDataBase(object serv)
+        {
+            Server server = (Server)serv;
+            DateTime dateTime = DateTime.Now;
+            while (true)
+            {
+                if ((DateTime.Now - dateTime).TotalDays >= 1)
+                {
+                    server.CheckIncomes();
+                    server.CheckExpenses();
+                    dateTime = DateTime.Now;
+                }
+            }
+        }
+        
+
         static void Main(string[] args)
         {
             Server server = new Server(
@@ -20,6 +36,9 @@ namespace Coiner_Server
                 "server=localhost;user=root;database=coiner_db;password=serg.hook80401"
                 );
 
+            Thread thr = new Thread(new ParameterizedThreadStart(UpdateDataBase));
+            thr.Start(server);
+
             while (true)
             {
                 try
@@ -27,9 +46,6 @@ namespace Coiner_Server
                     NetworkStream stream = server.AccpeptConnection();
                     string someQuery = server.Read(stream);
                     string someResponse = "Invalid query";
-
-                    server.CheckIncomes();
-                    server.CheckExpenses();
 
                     switch (someQuery.Substring(0, someQuery.IndexOf(';')))
                     {
